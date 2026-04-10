@@ -202,4 +202,64 @@
 
 <div id="login-overlay">
     <div class="login-card">
-        <h1 style="color:var(--main-red); margin:0;">STUDY HUB</h1>
+        <h1 style="color:var(--main-red); margin:0;">STUDY HUB</h1>classList.remove('hidden');
+        event.target.classList.add('active');
+        if(id === 'rank') drawRank();
+    }
+
+    function reset() {
+        if(!run){
+            const h = parseInt(document.getElementById('h-set').value);
+            const m = parseInt(document.getElementById('m-set').value);
+            left = (h * 3600) + (m * 60);
+            draw();
+        }
+    }
+
+    function toggle() {
+        const b = document.getElementById('go');
+        if(run){ clearInterval(ref); run = false; b.innerText = "استئناف"; }
+        else {
+            run = true; b.innerText = "إيقاف مؤقت";
+            ref = setInterval(() => {
+                left--; draw();
+                if(left <= 0){ clearInterval(ref); alert("بطل! كملت."); }
+            }, 1000);
+        }
+    }
+
+    function draw() {
+        const h = Math.floor(left / 3600);
+        const m = Math.floor((left % 3600) / 60);
+        const s = left % 60;
+        document.getElementById('timer-text').innerText = ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')};
+        document.getElementById('total-h').innerText = ${h}:${String(m).padStart(2,'0')};
+    }
+
+    function takeBreak() { clearInterval(ref); run = false; left = 300; draw(); }
+
+    function upImg(i) {
+        if (i.files && i.files[0]) {
+            const r = new FileReader();
+            r.onload = (e) => {
+                document.getElementById('p-img').src = e.target.result;
+                localStorage.setItem('user_i', e.target.result);
+            };
+            r.readAsDataURL(i.files[0]);
+        }
+    }
+
+    function drawRank() {
+        const l = document.getElementById('rank-list');
+        l.innerHTML = `<div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:20px; display:flex; justify-content:space-between; align-items:center; border-right:4px solid var(--neon-blue);">
+            <div style="display:flex; align-items:center; gap:10px">
+                <img src="${document.getElementById('p-img').src}" style="width:45px; height:45px; border-radius:10px">
+                <b>${name} (أنت)</b>
+            </div>
+            <b>${document.getElementById('total-h').innerText}</b>
+        </div>`;
+    }
+</script>
+
+</body>
+</html>
