@@ -3,43 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STUDY HUB</title>
+    <title>Study-np7pn | منصة أمين آغا</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background: #000; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { border: 2px solid #ff1a1a; padding: 40px; border-radius: 30px; width: 300px; text-align: center; box-shadow: 0 0 30px #ff1a1a; }
-        input { width: 100%; padding: 15px; margin: 20px 0; border-radius: 12px; border: 1px solid #333; background: #111; color: white; text-align: center; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; border-radius: 12px; background: #ff1a1a; color: white; font-weight: bold; border: none; cursor: pointer; font-size: 18px; }
-        #app { display: none; text-align: center; }
+        :root { --neon-blue: #00d2ff; --main-red: #ff1a1a; --glass: rgba(0, 15, 30, 0.9); }
+        body { background: radial-gradient(circle at top, #002b5c 0%, #00050a 100%); color: white; font-family: sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        #login-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: linear-gradient(145deg, #1a0000, #000000); padding: 40px 25px; border-radius: 35px; width: 100%; max-width: 380px; text-align: center; border: 2px solid var(--main-red); box-shadow: 0 0 40px rgba(255, 26, 26, 0.4); }
+        input { background: #0d0d0d; border: 1px solid #333; color: white; padding: 18px; border-radius: 15px; width: 100%; margin: 20px 0; text-align: center; font-size: 16px; }
+        .btn-login { background: var(--main-red); color: white; border: none; padding: 18px; border-radius: 15px; width: 100%; font-weight: bold; cursor: pointer; font-size: 18px; }
+        #main-app { width: 100%; max-width: 480px; padding: 20px; display: none; padding-bottom: 80px; }
+        .nav-tabs { display: flex; background: var(--glass); border-radius: 20px; padding: 6px; margin-bottom: 25px; border: 1px solid rgba(0, 210, 255, 0.2); }
+        .tab-btn { flex: 1; padding: 14px; text-align: center; cursor: pointer; border-radius: 15px; font-size: 13px; color: var(--neon-blue); }
+        .tab-btn.active { background: var(--neon-blue); color: white; font-weight: bold; }
+        .main-card { background: var(--glass); border-radius: 35px; padding: 30px 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        #timer-text { font-size: 70px; font-weight: 900; margin: 15px 0; text-shadow: 0 0 20px var(--neon-blue); }
+        .control-btn { background: var(--neon-blue); color: white; border: none; padding: 18px; border-radius: 18px; width: 100%; font-weight: bold; margin-top: 10px; }
+        .rank-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-right: 4px solid var(--neon-blue); }
+        .hidden { display: none; }
+        .tele-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #0088cc; color: white; padding: 12px 25px; border-radius: 50px; text-decoration: none; font-size: 12px; z-index: 999; }
     </style>
 </head>
 <body>
-    <div id="login-box">
-        <div class="card">
-            <h1 style="color:#ff1a1a;">STUDY HUB</h1>
-            <input type="text" id="username" placeholder="اكتب اسمك هنا...">
-            <button onclick="login()">دخول المنصة ⚔️</button>
+
+<a href="https://t.me/AminHawramy" target="_blank" class="tele-btn">💬 تواصل مع المصمم أمين آغا</a>
+
+<div id="login-overlay">
+    <div class="login-card">
+        <h1 style="color:var(--main-red); letter-spacing: 2px;">Study-np7pn</h1>
+        <p style="color:#888; font-size:14px; margin-bottom: 20px;">المنصة الرسمية للمنافسة الدراسية</p>
+        <input type="text" id="user-in" placeholder="أدخل اسمك يا بطل...">
+        <button class="btn-login" onclick="login()">ابدأ التحدي ⚔️</button>
+    </div>
+</div>
+
+<div id="main-app">
+    <div class="nav-tabs">
+        <div class="tab-btn" onclick="tab('muscle')">عضلاتك</div>
+        <div class="tab-btn" onclick="tab('rank')">المتصدرين</div>
+        <div class="tab-btn active" onclick="tab('study')">الدراسة</div>
+    </div>
+
+    <div id="study-sec" class="page">
+        <div class="main-card">
+            <h3 style="color:var(--neon-blue);">عداد التركيز</h3>
+            <div id="timer-text">01:00:00</div>
+            <button class="control-btn" id="go" onclick="toggle()">ابدأ الجلسة</button>
         </div>
     </div>
-    <div id="app">
-        <h1 style="color:#00d2ff;">أهلاً بك يا بطل!</h1>
-        <div style="font-size: 50px; margin: 20px;" id="timer">01:00:00</div>
-        <button style="background:#00d2ff; color:black;" onclick="localStorage.clear(); location.reload();">خروج</button>
+
+    <div id="rank-sec" class="page hidden">
+        <div id="rank-list" style="margin-top: 10px;">جاري تحميل المتصدرين...</div>
     </div>
-    <script>
-        function login() {
-            const user = document.getElementById('username').value.trim();
-            if(user) {
-                localStorage.setItem('user', user);
-                document.getElementById('login-box').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
-            }
+
+    <div id="muscle-sec" class="page hidden">
+        <div class="main-card">
+            <h2 id="u-display" style="color:var(--neon-blue);">NAME</h2>
+            <div style="background:rgba(0,0,0,0.5); padding:20px; border-radius:25px; margin-top: 15px;">
+                <span style="font-size: 14px; color: #aaa;">إجمالي ساعات الدراسة</span><br>
+                <b id="total-h" style="font-size: 32px; color: #fff;">0.0</b>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://uvjzcvcootxczskzoobt.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_GZC6P1Lbkgo-vsviYRLqlg_HaiAQ-A9'; 
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let left = 3600; let ref = null; let run = false;
+    let userName = localStorage.getItem('user_n') || "";
+
+    async function login() {
+        const v = document.getElementById('user-in').value.trim();
+        if(v){
+            localStorage.setItem('user_n', v);
+            await supabase.from('leaderboard').upsert({ name: v }, { onConflict: 'name' });
+            location.reload();
         }
-        window.onload = () => {
-            if(localStorage.getItem('user')) {
-                document.getElementById('login-box').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
-            }
+    }
+
+    window.onload = async () => {
+        if(userName){
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('u-display').innerText = userName;
+            loadUserData();
         }
-    </script>
+    }
+
+    async function loadUserData() {
+        try {
+            const { data } = await supabase.from('leaderboard').select('*').eq('name', userName).maybeSingle();
+            if(data) document.getElementById('total-h').innerText = data.hours.toFixed(1);
+        } catch (e) { console.log("Error loading data"); }
+    }
+
+    function tab(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        document.getElementById(id + '-sec').classList.remove('hidden');
+        if(id === 'rank') fetchRank();
+    }
+
+    async function fetchRank() {
+        const { data } = await supabase.from('leaderboard').select('*').order('hours', { ascending: false });
+        const list = document.getElementById('rank-list');
+        if(!data || data.length === 0) {
+            list.innerHTML = "<p>لا يوجد متصدرين حالياً</p>";
+            return;
+        }
+        list.innerHTML = data.map((u, i) => `
+            <div class="rank-item">
+                <span>#${i+1} ${u.name}</span>
+                <b>${u.hours.toFixed(1)} ساعة</b>
+            </div>
+        `).join('');
+    }
+
+    function toggle() {
+        const b = document.getElementById('go');
+        if(run){ 
+            clearInterval(ref); run = false; b.innerText = "استئناف الجلسة";
+            updateHours(); 
+        } else {
+            run = true; b.innerText = "إيقاف مؤقت";
+            ref = setInterval(() => { left--; draw(); }, 1000);
+        }
+    }
+
+    function draw() {
+        const h = Math.floor(left / 3600);
+        const m = Math.floor((left % 3600) / 60);
+        const s = left % 60;
+        document.getElementById('timer-text').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if(left <= 0) { clearInterval(ref); updateHours(); alert("كفو! انتهت الجلسة."); }
+    }
+
+    async function updateHours() {
+        const currentH = parseFloat(document.getElementById('total-h').innerText);
+        await supabase.from('leaderboard').update({ hours: currentH + 0.1 }).eq('name', userName);
+        loadUserData();
+    }
+</script>
 </body>
 </html>
