@@ -1,2 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMIN HAWRAMI | STUDY HUB</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --neon-blue: #00d2ff; --main-red: #ff1a1a; --glass: rgba(0, 15, 30, 0.9); }
+        body { background: radial-gradient(circle at top, #002b5c 0%, #00050a 100%); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        #login-overlay { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: linear-gradient(145deg, #1a0000, #000000); padding: 40px 25px; border-radius: 35px; width: 100%; max-width: 380px; text-align: center; border: 2px solid var(--main-red); box-shadow: 0 0 40px rgba(255, 26, 26, 0.4); }
+        input { background: #0d0d0d; border: 1px solid #333; color: white; padding: 18px; border-radius: 15px; width: 100%; margin: 20px 0; box-sizing: border-box; text-align: center; font-size: 16px; }
+        .btn-login { background: var(--main-red); color: white; border: none; padding: 18px; border-radius: 15px; width: 100%; font-weight: bold; font-size: 18px; cursor: pointer; }
+        #main-app { width: 100%; max-width: 480px; padding: 20px; display: none; padding-bottom: 100px; }
+        .nav-tabs { display: flex; background: var(--glass); backdrop-filter: blur(15px); border-radius: 20px; padding: 6px; margin-bottom: 25px; border: 1px solid rgba(0, 210, 255, 0.2); }
+        .tab-btn { flex: 1; padding: 14px; text-align: center; cursor: pointer; border-radius: 15px; font-size: 13px; color: var(--neon-blue); }
+        .tab-btn.active { background: var(--neon-blue); color: white; font-weight: bold; }
+        .main-card { background: var(--glass); border-radius: 35px; padding: 30px 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        #timer-text { font-size: 65px; font-weight: 900; margin: 15px 0; text-shadow: 0 0 20px var(--neon-blue); font-family: monospace; }
+        .control-btn { background: var(--neon-blue); color: white; border: none; padding: 18px; border-radius: 18px; width: 100%; font-weight: bold; font-size: 18px; margin-top: 10px; cursor: pointer; }
+        .rank-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-right: 4px solid var(--neon-blue); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="login-overlay">
+    <div class="login-card">
+        <h1 style="color:var(--main-red); margin:0;">STUDY HUB</h1>
+        <p style="color:#666; font-size:12px; margin-top:10px;">نرحب بكم بموقع أمين آغا</p>
+        <input type="text" id="user-in" placeholder="اكتب اسمك للدخول...">
+        <button class="btn-login" onclick="login()">دخول المنصة ⚔️</button>
+    </div>
+</div>
+
+<div id="main-app">
+    <div class="nav-tabs">
+        <div class="tab-btn" onclick="tab('muscle')">عضلاتك</div>
+        <div class="tab-btn" onclick="tab('rank')">المتصدرين</div>
+        <div class="tab-btn active" onclick="tab('study')">الدراسة</div>
+    </div>
+    <div id="study-sec" class="page">
+        <div class="main-card">
+            <div id="timer-text">00:00:00</div>
+            <button class="control-btn" id="go" onclick="toggle()">ابدأ الجلسة</button>
+        </div>
+    </div>
+    <div id="rank-sec" class="page hidden"><div id="rank-list">جاري التحميل...</div></div>
+    <div id="muscle-sec" class="page hidden"><div class="main-card"><h2 id="u-display"></h2><p>إجمالي الساعات: <b id="total-h">0.0</b></p></div></div>
+</div>
+
+<script>
     const SUPABASE_URL = 'https://uvjzcvcootxczskzoobt.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2anpjdmNvb3R4Y3pza3pvb2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NzM4MTMsImV4cCI6MjA5MTM0OTgxM30.HrPAr2hJoGpp5bVTBY4ey4CwVZ3MLvyD61B_h29gocA';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let left = 3600; let ref = null; let run = false;
+    let userName = localStorage.getItem('user_n');
+
+    async function login() {
+        const v = document.getElementById('user-in').value.trim();
+        if(v){
+            localStorage.setItem('user_n', v);
+            await supabase.from('leaderboard').upsert({ name: v }, { onConflict: 'name' });
+            location.reload();
+        }
+    }
+
+    window.onload = () => {
+        if(userName){
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('u-display').innerText = userName;
+            fetchRank();
+        }
+    }
+
+    function toggle() {
+        const b = document.getElementById('go');
+        if(run){ clearInterval(ref); run = false; b.innerText = "استئناف"; updateDB(); }
+        else {
+            run = true; b.innerText = "إيقاف";
+            ref = setInterval(() => { left--; draw(); }, 1000);
+        }
+    }
+
+    function draw() {
+        const h = Math.floor(left / 3600);
+        const m = Math.floor((left % 3600) / 60);
+        const s = left % 60;
+        document.getElementById('timer-text').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    async function updateDB() {
+        await supabase.from('leaderboard').update({ hours: 1 }).eq('name', userName);
+    }
+
+    async function fetchRank() {
+        const { data } = await supabase.from('leaderboard').select('*').order('hours', { ascending: false });
+        if(data) document.getElementById('rank-list').innerHTML = data.map(u => `<div class="rank-item"><span>${u.name}</span><b>${u.hours} ساعة</b></div>`).join('');
+    }
+
+    function tab(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.getElementById(id + '-sec').classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
